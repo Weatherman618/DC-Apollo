@@ -1,0 +1,43 @@
+input price = close;
+input displace = 0;
+input length = 20;
+input stop = 2;
+Input TGT = 1.5;
+input Num_Dev_Dn = -2.0;
+input Num_Dev_up = 2.0;
+input averageType = AverageType.Simple;
+
+addLabel( yes, "Don Chain Apollo", Color.White);
+addLabel( yes, "Bull-Bear", Color.White);
+
+def sDev = stdev(data = price[-displace], length = length);
+def ATR = MovingAverage(averageType, TrueRange(high, close, low), length);
+
+
+plot MidLine = MovingAverage(averageType, data = price[-displace], length = length);
+plot LowerBand = MidLine + num_Dev_Dn * sDev;
+plot UpperBand = MidLine + num_Dev_Up * sDev;
+
+#Short Trigger
+Def SHORT = if  ((Low[1] < LowerBand) and (Low < Low[1]) and (close[1] < Lowerband[1])) then 1 else 0;
+#Long trigger
+Def LONG = if  ((High[1] > UpperBand) and (High > High[1]) and (close[1] > Upperband[1])) then 1 else 0;
+
+Plot TargetLine = if LONG == 1 then (UpperBand + (ATR*TGT)) else Double.NaN ;
+Plot StopLine = if LONG == 1 then (UpperBand - (ATR*stop)) else double.NaN;
+
+
+#orders Bear Entry
+addOrder(OrderType.SELL_TO_OPEN, (SHORT == 1), Low[1], 1, tickColor = GetColor(9), arrowColor = GetColor(9));
+
+#Bear Target
+addOrder(OrderType.BUY_TO_CLOSE, close < EntryPrice () - (ATR*TGT), EntryPrice () - (ATR*TGT) , 1, tickColor = GetColor(9), arrowColor = GetColor(9));
+#Bear Stop
+addOrder(OrderType.BUY_TO_CLOSE, close > EntryPrice () + (ATR*Stop), EntryPrice () + (ATR*TGT) , 1, tickColor = GetColor(9), arrowColor = GetColor(9));
+
+#bull Open
+addOrder(OrderType.BUY_TO_OPEN, (LONG == 1), High[1], 1, tickColor = GetColor(9), arrowColor = GetColor(9));
+#bull Target
+addOrder(OrderType.SELL_TO_CLOSE, close > EntryPrice () + (ATR*TGT), EntryPrice () + (ATR*TGT) , 1, tickColor = GetColor(9), arrowColor = GetColor(9));
+#Bull Stop
+addOrder(OrderType.SELL_TO_CLOSE, close < EntryPrice () - (ATR*Stop), EntryPrice () - (ATR*TGT) , 1, tickColor = GetColor(9), arrowColor = GetColor(9));
